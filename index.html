@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Multi-Stream YouTube</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f9f9f9;
+            min-height: 100vh;
+            padding: 20px;
+            color: #0f0f0f;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-bottom: 3px solid #ff0000;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #0f0f0f;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .header p {
+            color: #606060;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .management-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .player-count {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .count-btn {
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        .count-btn:hover {
+            background: #cc0000;
+        }
+
+        .count-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .current-count {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ff0000;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .streams-container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            min-height: 400px;
+        }
+
+        .streams-grid {
+            display: grid;
+            gap: 20px;
+            justify-content: center;
+            align-items: start;
+        }
+
+        /* Grilles dynamiques selon le nombre de players */
+        .streams-grid.count-1 { grid-template-columns: 1fr; max-width: 800px; margin: 0 auto; }
+        .streams-grid.count-2 { grid-template-columns: repeat(2, 1fr); max-width: 1200px; margin: 0 auto; }
+        .streams-grid.count-3 { grid-template-columns: repeat(3, 1fr); }
+        .streams-grid.count-4 { grid-template-columns: repeat(2, 1fr); }
+        .streams-grid.count-5 { grid-template-columns: repeat(3, 1fr); }
+        .streams-grid.count-6 { grid-template-columns: repeat(3, 1fr); }
+        .streams-grid.count-7 { grid-template-columns: repeat(4, 1fr); }
+        .streams-grid.count-8 { grid-template-columns: repeat(4, 1fr); }
+        .streams-grid.count-9 { grid-template-columns: repeat(3, 1fr); }
+
+        .stream-card {
+            background: #fafafa;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .stream-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #d0d0d0;
+        }
+
+        .stream-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stream-title {
+            color: #0f0f0f;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000;
+            margin-bottom: 12px;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #ff0000;
+            box-shadow: 0 0 0 1px #ff0000;
+        }
+
+        .url-input::placeholder {
+            color: #909090;
+        }
+
+        .update-btn {
+            width: 100%;
+            padding: 10px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            font-family: inherit;
+        }
+
+        .update-btn:hover {
+            background: #cc0000;
+        }
+
+        .update-btn:active {
+            background: #b30000;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #0f0f0f;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .control-btn:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        .control-btn.primary {
+            background: #ff0000;
+            color: white;
+            border-color: #ff0000;
+        }
+
+        .control-btn.primary:hover {
+            background: #cc0000;
+            border-color: #cc0000;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #606060;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #0f0f0f;
+        }
+
+        @media (max-width: 1200px) {
+            .streams-grid.count-3 { grid-template-columns: repeat(2, 1fr); }
+            .streams-grid.count-5 { grid-template-columns: repeat(2, 1fr); }
+            .streams-grid.count-6 { grid-template-columns: repeat(2, 1fr); }
+            .streams-grid.count-7 { grid-template-columns: repeat(3, 1fr); }
+            .streams-grid.count-8 { grid-template-columns: repeat(3, 1fr); }
+            .streams-grid.count-9 { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .streams-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .streams-container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .management-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>YouTube Multi-Stream Dashboard</h1>
+            <p>Gérez et surveillez vos flux YouTube dynamiquement</p>
+        </div>
+
+        <div class="management-panel">
+            <div class="player-count">
+                <button class="count-btn" onclick="changePlayerCount(-1)">−</button>
+                <span class="current-count" id="playerCount">3</span>
+                <button class="count-btn" onclick="changePlayerCount(1)">+</button>
+                <span>Players</span>
+            </div>
+            <button class="control-btn" onclick="addPlayer()">Ajouter un Player</button>
+            <button class="control-btn" onclick="resetAll()">Reset Dashboard</button>
+        </div>
+
+        <div class="streams-container">
+            <div class="streams-grid count-3" id="streamsGrid">
+                <!-- Les players seront générés dynamiquement -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn primary" onclick="refreshAllStreams()">Actualiser tout</button>
+            <button class="control-btn" onclick="muteAll()">Couper le son</button>
+            <button class="control-btn" onclick="loadRandomDemo()">Demo</button>
+        </div>
+    </div>
+
+    <script>
+        let playerCount = 3;
+        let isMuted = false;
+        let loadedStreams = new Set();
+        let streamCounter = 1;
+
+        function initializeDashboard() {
+            generatePlayers();
+        }
+
+        function generatePlayers() {
+            const grid = document.getElementById('streamsGrid');
+            grid.innerHTML = '';
+            
+            // Mettre à jour la classe CSS pour la grille
+            grid.className = `streams-grid count-${playerCount}`;
+            
+            if (playerCount === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Aucun player configuré</h3>
+                        <p>Cliquez sur "+" pour ajouter des players</p>
+                    </div>
+                `;
+                return;
+            }
+
+            for (let i = 1; i <= playerCount; i++) {
+                const streamCard = document.createElement('div');
+                streamCard.className = 'stream-card';
+                streamCard.innerHTML = `
+                    <div class="stream-header">
+                        <div class="stream-title">Stream #${i}</div>
+                        <button class="delete-btn" onclick="removePlayer(${i})" title="Supprimer ce player">×</button>
+                    </div>
+                    <div class="video-container">
+                        <iframe src="about:blank" allowfullscreen></iframe>
+                    </div>
+                    <input type="text" class="url-input" placeholder="URL YouTube ou ID de la vidéo..." data-stream="${i}">
+                    <button class="update-btn" onclick="updateStream(${i})">Charger</button>
+                `;
+                grid.appendChild(streamCard);
+            }
+
+            // Mettre à jour les event listeners
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.url-input').forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const streamNumber = parseInt(this.getAttribute('data-stream'));
+                        updateStream(streamNumber);
+                    }
+                });
+            });
+        }
+
+        function changePlayerCount(delta) {
+            const newCount = playerCount + delta;
+            if (newCount >= 0 && newCount <= 12) {
+                playerCount = newCount;
+                document.getElementById('playerCount').textContent = playerCount;
+                generatePlayers();
+            }
+        }
+
+        function addPlayer() {
+            if (playerCount < 12) {
+                changePlayerCount(1);
+            }
+        }
+
+        function removePlayer(streamNumber) {
+            if (playerCount > 1) {
+                playerCount--;
+                document.getElementById('playerCount').textContent = playerCount;
+                loadedStreams.delete(streamNumber);
+                generatePlayers();
+            } else if (playerCount === 1) {
+                changePlayerCount(-1);
+            }
+        }
+
+        function resetAll() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser le dashboard ?')) {
+                playerCount = 3;
+                document.getElementById('playerCount').textContent = playerCount;
+                loadedStreams.clear();
+                isMuted = false;
+                document.querySelector('button[onclick="muteAll()"]').textContent = 'Couper le son';
+                generatePlayers();
+            }
+        }
+
+        function extractVideoId(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^#\&\?]{11})/,
+                /^([a-zA-Z0-9_-]{11})$/
+            ];
+            
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+
+        function updateStream(streamNumber) {
+            const input = document.querySelector(`input[data-stream="${streamNumber}"]`);
+            const streamCard = input.closest('.stream-card');
+            const iframe = streamCard.querySelector('iframe');
+            
+            if (!input.value.trim()) {
+                alert('Veuillez entrer une URL YouTube valide');
+                return;
+            }
+
+            const videoId = extractVideoId(input.value.trim());
+            
+            if (!videoId) {
+                alert('URL YouTube invalide. Formats acceptés:\n- https://www.youtube.com/watch?v=VIDEO_ID\n- https://youtu.be/VIDEO_ID\n- VIDEO_ID');
+                return;
+            }
+
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1&controls=1`;
+            iframe.src = embedUrl;
+            loadedStreams.add(streamNumber);
+            
+            // Mise à jour du bouton
+            const button = input.nextElementSibling;
+            const originalText = button.textContent;
+            button.textContent = 'Chargé ✓';
+            button.style.background = '#00c853';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '#ff0000';
+            }, 2000);
+        }
+
+        function refreshAllStreams() {
+            const inputs = document.querySelectorAll('.url-input');
+            inputs.forEach((input, index) => {
+                if (input.value.trim()) {
+                    updateStream(index + 1);
+                }
+            });
+        }
+
+        function muteAll() {
+            isMuted = !isMuted;
+            const iframes = document.querySelectorAll('iframe');
+            
+            iframes.forEach(iframe => {
+                const src = iframe.src;
+                if (src.includes('youtube.com/embed/')) {
+                    const urlObj = new URL(src);
+                    urlObj.searchParams.set('mute', isMuted ? '1' : '0');
+                    iframe.src = urlObj.toString();
+                }
+            });
+            
+            const btn = event.target;
+            btn.textContent = isMuted ? 'Activer le son' : 'Couper le son';
+        }
+
+        function loadRandomDemo() {
+            const demoVideos = [
+                'dQw4w9WgXcQ',
+                'kJQP7kiw5Fk',
+                'fJ9rUzIMcZQ',
+                'ZZ5LpwO-An4',
+                'hFZFjoX2cGg'
+            ];
+            
+            const inputs = document.querySelectorAll('.url-input');
+            inputs.forEach((input, index) => {
+                if (index < demoVideos.length) {
+                    input.value = demoVideos[index];
+                    setTimeout(() => updateStream(index + 1), index * 500);
+                }
+            });
+        }
+
+        // Raccourcis clavier
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshAllStreams();
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        muteAll();
+                        break;
+                    case '=':
+                    case '+':
+                        e.preventDefault();
+                        addPlayer();
+                        break;
+                    case '-':
+                        e.preventDefault();
+                        changePlayerCount(-1);
+                        break;
+                }
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    </script>
+</body>
+</html>
