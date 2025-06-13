@@ -20,25 +20,31 @@
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            align-items: center;
             margin-bottom: 30px;
             background: white;
-            padding: 25px;
-            border-radius: 8px;
+            padding: 10px 25px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-bottom: 3px solid #ff0000;
+            border-bottom: 3px solid #000000;
+            position: relative;
+        }
+
+        .header .logo {
+            height: 35px;
+            width: auto;
+            margin-right: 20px;
+        }
+
+        .header .title-container {
+            flex: 1;
+            text-align: center;
         }
 
         .header h1 {
-            font-size: 2.2rem;
+            font-size: 1.7rem;
             color: #0f0f0f;
-            margin-bottom: 8px;
             font-weight: 500;
-        }
-
-        .header p {
-            color: #606060;
-            font-size: 1rem;
         }
 
         .container {
@@ -67,7 +73,7 @@
         }
 
         .count-btn {
-            background: #ff0000;
+            background: #000000;
             color: white;
             border: none;
             border-radius: 50%;
@@ -80,7 +86,7 @@
         }
 
         .count-btn:hover {
-            background: #cc0000;
+            background: #333333;
         }
 
         .count-btn:disabled {
@@ -91,7 +97,7 @@
         .current-count {
             font-size: 1.1rem;
             font-weight: 600;
-            color: #ff0000;
+            color: #000000;
             min-width: 30px;
             text-align: center;
         }
@@ -142,16 +148,34 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            gap: 10px;
         }
 
-        .stream-title {
+        .stream-title-input {
             color: #0f0f0f;
             font-size: 1.1rem;
             font-weight: 500;
+            border: none;
+            background: transparent;
+            flex: 1;
+            min-width: 0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .stream-title-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 2px #000000;
+        }
+
+        .stream-title-input::placeholder {
+            color: #909090;
         }
 
         .delete-btn {
-            background: #ff4444;
+            background: #444444;
             color: white;
             border: none;
             border-radius: 4px;
@@ -160,10 +184,11 @@
             cursor: pointer;
             font-size: 12px;
             transition: background-color 0.2s ease;
+            flex-shrink: 0;
         }
 
         .delete-btn:hover {
-            background: #cc0000;
+            background: #000000;
         }
 
         .video-container {
@@ -200,8 +225,8 @@
 
         .url-input:focus {
             outline: none;
-            border-color: #ff0000;
-            box-shadow: 0 0 0 1px #ff0000;
+            border-color: #000000;
+            box-shadow: 0 0 0 1px #000000;
         }
 
         .url-input::placeholder {
@@ -211,7 +236,7 @@
         .update-btn {
             width: 100%;
             padding: 10px;
-            background: #ff0000;
+            background: #000000;
             color: white;
             border: none;
             border-radius: 4px;
@@ -223,11 +248,11 @@
         }
 
         .update-btn:hover {
-            background: #cc0000;
+            background: #333333;
         }
 
         .update-btn:active {
-            background: #b30000;
+            background: #555555;
         }
 
         .controls {
@@ -260,14 +285,14 @@
         }
 
         .control-btn.primary {
-            background: #ff0000;
+            background: #000000;
             color: white;
-            border-color: #ff0000;
+            border-color: #000000;
         }
 
         .control-btn.primary:hover {
-            background: #cc0000;
-            border-color: #cc0000;
+            background: #333333;
+            border-color: #333333;
         }
 
         .empty-state {
@@ -299,13 +324,34 @@
                 padding: 20px;
             }
             
+            .header {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+            }
+            
+            .header .logo {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
             .header h1 {
-                font-size: 1.8rem;
+                font-size: 1.4rem;
             }
             
             .management-panel {
                 flex-direction: column;
                 gap: 10px;
+            }
+            
+            .stream-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .delete-btn {
+                align-self: flex-end;
             }
         }
     </style>
@@ -313,8 +359,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>YouTube Multi-Stream Dashboard</h1>
-            <p>Gérez et surveillez vos flux YouTube dynamiquement</p>
+            <img src="https://cdn.worldvectorlogo.com/logos/groupe-renault-1.svg" alt="Renault Group" class="logo" onerror="this.style.display='none';">
+            <div class="title-container">
+                <h1>Multi Stream Supervision</h1>
+            </div>
         </div>
 
         <div class="management-panel">
@@ -346,6 +394,7 @@
         let isMuted = false;
         let loadedStreams = new Set();
         let streamCounter = 1;
+        let streamNames = {};
 
         function initializeDashboard() {
             generatePlayers();
@@ -371,9 +420,13 @@
             for (let i = 1; i <= playerCount; i++) {
                 const streamCard = document.createElement('div');
                 streamCard.className = 'stream-card';
+                const savedName = streamNames[i] || `Stream #${i}`;
                 streamCard.innerHTML = `
                     <div class="stream-header">
-                        <div class="stream-title">Stream #${i}</div>
+                        <input type="text" class="stream-title-input" value="${savedName}" 
+                               placeholder="Nom du stream..." 
+                               onchange="updateStreamName(${i}, this.value)"
+                               onblur="updateStreamName(${i}, this.value)">
                         <button class="delete-btn" onclick="removePlayer(${i})" title="Supprimer ce player">×</button>
                     </div>
                     <div class="video-container">
@@ -387,6 +440,14 @@
 
             // Mettre à jour les event listeners
             setupEventListeners();
+        }
+
+        function updateStreamName(streamNumber, name) {
+            if (name.trim()) {
+                streamNames[streamNumber] = name.trim();
+            } else {
+                streamNames[streamNumber] = `Stream #${streamNumber}`;
+            }
         }
 
         function setupEventListeners() {
@@ -420,6 +481,7 @@
                 playerCount--;
                 document.getElementById('playerCount').textContent = playerCount;
                 loadedStreams.delete(streamNumber);
+                delete streamNames[streamNumber];
                 generatePlayers();
             } else if (playerCount === 1) {
                 changePlayerCount(-1);
@@ -431,6 +493,7 @@
                 playerCount = 3;
                 document.getElementById('playerCount').textContent = playerCount;
                 loadedStreams.clear();
+                streamNames = {};
                 isMuted = false;
                 document.querySelector('button[onclick="muteAll()"]').textContent = 'Couper le son';
                 generatePlayers();
@@ -480,7 +543,7 @@
             button.style.background = '#00c853';
             setTimeout(() => {
                 button.textContent = originalText;
-                button.style.background = '#ff0000';
+                button.style.background = '#000000';
             }, 2000);
         }
 
